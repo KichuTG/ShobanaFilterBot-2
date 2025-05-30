@@ -32,18 +32,25 @@ BUTTONS = {}
 SPELL_CHECK = {}
 
 
-@Client.on_message(filters.group | filters.private & filters.text & filters.incoming) 
+
+@Client.on_message(filters.group | (filters.private & filters.text & filters.incoming)) 
 async def give_filter(client, message):
-    await asyncio.sleep(5)
     try:
-        await message.delete()
+        # Run manual and auto filters
+        k = await manual_filters(client, message)
+        if k is False:
+            await auto_filter(client, message)
+
+        # Wait 300 seconds before deleting user message
+        await asyncio.sleep(300)
+        try:
+            await message.delete()
+        except Exception as e:
+            logger.exception("Failed to delete user message after delay:", e)
+
     except Exception as e:
-        logger.exception("Failed to delete message:", e)
-
-    k = await manual_filters(client, message)
-    if k == False:
-        await auto_filter(client, message)
-
+        logger.exception("Filter handling error:", e)
+        
 @Client.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
     ident, req, key, offset = query.data.split("_")
