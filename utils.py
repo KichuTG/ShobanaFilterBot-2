@@ -56,11 +56,11 @@ from database.users_chats_db import db
 async def is_subscribed(user_id: int, client) -> bool:
     auth_channels = await db.get_auth_channels()
     if not auth_channels:
-        return True  # No channels to check
+        return True  # No forced subscription required
 
-    for channel in auth_channels:
+    for channel_id in auth_channels:
         try:
-            member = await client.get_chat_member(channel, user_id)
+            member = await client.get_chat_member(channel_id, user_id)
             if member.status in [
                 ChatMemberStatus.MEMBER,
                 ChatMemberStatus.ADMINISTRATOR,
@@ -68,25 +68,31 @@ async def is_subscribed(user_id: int, client) -> bool:
             ]:
                 return True
         except Exception:
-            continue  # Skip if channel is inaccessible
+            continue  # Skip errors and check the next channel
 
     return False
 
-# @MrMNTG @MusammilN
-# please give credits https://github.com/MN-BOTS/ShobanaFilterBot
 
 async def create_invite_links(client) -> dict:
     links = {}
     auth_channels = await db.get_auth_channels()
-    for channel in auth_channels:
+
+    for channel_id in auth_channels:
         try:
-            invite = await client.create_chat_invite_link(
-                channel,
-                name="BotAuthAccess"  # Custom name (optional)
-            )
-            links[channel] = invite.invite_link
+            chat = await client.get_chat(channel_id)
+            if chat.username:
+                # Public channel, use t.me/username
+                links[channel_id] = f"https://t.me/{chat.username}"
+            else:
+                # Private channel, create invite link (bot must be admin)
+                invite = await client.create_chat_invite_link(
+                    chat.id,
+                    name="BotAuthAccess"
+                )
+                links[channel_id] = invite.invite_link
         except Exception:
-            continue
+            continue  # Skip if any error occurs (e.g., bot not admin)
+
     return links
 
 #  @MrMNTG @MusammilN
