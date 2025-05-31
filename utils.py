@@ -50,18 +50,14 @@ class temp(object):
 from pyrogram.enums import ChatMemberStatus
 from database.users_chats_db import db
 
-#  @MrMNTG @MusammilN
-#please give credits https://github.com/MN-BOTS/ShobanaFilterBot
-JOIN_REQUEST_USERS = {} 
-#  @MrMNTG @MusammilN
-#please give credits https://github.com/MN-BOTS/ShobanaFilterBot
+# @MrMNTG @MusammilN
+# please give credits https://github.com/MN-BOTS/ShobanaFilterBot
 
 async def is_subscribed(user_id: int, client) -> bool:
     auth_channels = await db.get_auth_channels()
     if not auth_channels:
         return True  # No channels to check
 
-    # First check: Is user already a member/admin/owner in any auth channel?
     for channel in auth_channels:
         try:
             member = await client.get_chat_member(channel, user_id)
@@ -74,15 +70,11 @@ async def is_subscribed(user_id: int, client) -> bool:
         except Exception:
             continue  # Skip if channel is inaccessible
 
-    # Second check: Has user sent join requests to all auth channels?
-    requested_channels = JOIN_REQUEST_USERS.get(user_id, set())
-    if set(auth_channels).issubset(requested_channels):
-        return True
-
     return False
 
-#  @MrMNTG @MusammilN
-#please give credits https://github.com/MN-BOTS/ShobanaFilterBot
+# @MrMNTG @MusammilN
+# please give credits https://github.com/MN-BOTS/ShobanaFilterBot
+
 async def create_invite_links(client) -> dict:
     links = {}
     auth_channels = await db.get_auth_channels()
@@ -90,8 +82,7 @@ async def create_invite_links(client) -> dict:
         try:
             invite = await client.create_chat_invite_link(
                 channel,
-                creates_join_request=True,
-                name="BotAuthAccess"
+                name="BotAuthAccess"  # Custom name (optional)
             )
             links[channel] = invite.invite_link
         except Exception:
